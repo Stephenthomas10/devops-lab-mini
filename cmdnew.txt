@@ -1,0 +1,59 @@
+#Git — minimal workflow (commit / branch / merge / push)
+
+git init
+git add .
+git commit -m "init: minimal flask app"
+git branch -M main
+# create an empty GitHub repo named devops-lab-mini and paste its URL below
+git remote add origin https://github.com/<your-user>/devops-lab-mini.git
+git push -u origin main
+
+# demo branching & merging
+git checkout -b feature/banner
+# (pretend change) -> touch banner.txt
+echo "mini" > banner.txt
+git add banner.txt
+git commit -m "feat: add banner"
+git checkout main
+git merge feature/banner -m "merge feature/banner"
+git push
+
+#2 DOCKER
+# build & run locally
+docker build -t myflaskapp:mini .
+docker run -d -p 5000:5000 --name mini myflaskapp:mini
+# test in browser: http://localhost:5000
+docker logs mini | Select-String .
+
+# tag & push to Docker Hub
+docker tag myflaskapp:mini stephen02e3/myflaskapp:mini
+docker login
+docker push stephen02e3/myflaskapp:mini
+
+#3 CI/CD (GitHub Actions) — build & push automatically
+
+git add .github/workflows/ci-cd.yml
+git commit -m "ci: build & push docker image"
+git push
+
+#4 Nginx — reverse proxy
+
+# (ensure Flask container or local app is running on 5000)
+docker run -d --name mini-nginx -p 80:80 -v ${PWD}/nginx.conf:/etc/nginx/conf.d/default.conf:ro nginx:alpine
+# test in browser: http://localhost/  (should show the Flask message)
+
+# 5 Kubernetes — Minikube & kubectl (Deployment + Service)
+
+# start cluster
+minikube start
+
+# deploy
+kubectl apply -f k8s.yaml
+
+# verify
+kubectl get pods
+kubectl get svc mini-svc
+
+# open in browser
+minikube service mini-svc --url
+# or: http://$(minikube ip):30007
